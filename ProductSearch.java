@@ -2,7 +2,7 @@ import java.sql.*;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class ProductInsert {
+public class ProductSearch {
     final static String driver = "org.mariadb.jdbc.Driver";
     final static String db_url = "jdbc:mariadb://localhost:3306/px";
     final static String userId = "dev";
@@ -10,8 +10,6 @@ public class ProductInsert {
 
     public static void main (String[] args) {
         String  productName;
-        int     productPrice;
-        int     productAmount;
 
         try (Scanner sc = new Scanner(System.in)) {
             Class.forName(driver);
@@ -22,14 +20,9 @@ public class ProductInsert {
                     System.out.print("상품 명 : ");
                     productName = sc.next();
                     System.out.println();
-                    System.out.print("상품 가격 : ");
-                    productPrice = sc.nextInt();
-                    System.out.println();
-                    System.out.print("재고 수량 : ");
-                    productAmount = sc.nextInt();
 
-                    insertProduct(conn, productName, productPrice, productAmount);
-                    System.out.println("데이터 입력 성공\n");
+                    selectProduct(conn, productName);
+                    System.out.println("데이터 조회 완료\n");
                     System.out.print("* 종료하려면 exit 입력 : ");
                     if (sc.next().equals("exit")) break;
                     sc.nextLine();
@@ -38,20 +31,25 @@ public class ProductInsert {
         } catch (ClassNotFoundException e) {
             System.err.println("DB 연결 실패");
         } catch (SQLException e) {
-            System.err.println("데이터 입력 실패");
+            System.err.println("데이터 조회 실패");
         } catch (InputMismatchException e) {
             System.err.println("입력 값 매치 실패");
         }
     }
 
-    private static void insertProduct(Connection conn, String productName, int productPrice, int productAmount) throws SQLException {
-        String sql = "INSERT INTO 상품(상품명, 가격, 재고수량) VALUES (?, ?, ?)";
+    private static void selectProduct(Connection conn, String productName) throws SQLException {
+        String sql = "SELECT * FROM 상품 WHERE 상품명 LIKE CONCAT('%', ?, '%')";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, productName);
-            pstmt.setInt(2, productPrice);
-            pstmt.setInt(3, productAmount);
-            pstmt.execute();
+            try (ResultSet rs = pstmt.executeQuery()){
+                while (rs.next()) {
+                    System.out.println("상품 명 : " + rs.getString("상품명"));
+                    System.out.println("가격 : " + rs.getInt("가격"));
+                    System.out.println("재고 수량 : " + rs.getInt("재고수량"));
+                    System.out.println();
+                }
+            }
         }
     }
 }
