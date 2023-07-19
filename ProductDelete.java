@@ -2,14 +2,14 @@ import java.sql.*;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class ProductSearch {
+public class ProductDelete {
     final static String driver = "org.mariadb.jdbc.Driver";
     final static String db_url = "jdbc:mariadb://localhost:3306/px";
     final static String userId = "dev";
     final static String userPw = "dev";
 
     public static void main (String[] args) {
-        String  productName;
+        int     productCode;
 
         try (Scanner sc = new Scanner(System.in)) {
             Class.forName(driver);
@@ -17,12 +17,11 @@ public class ProductSearch {
                 if (conn == null || conn.isClosed()) throw new SQLException();
 
                 while (true) {
-                    System.out.print("상품 명 : ");
-                    productName = sc.next();
+                    System.out.print("상품 코드 : ");
+                    productCode = sc.nextInt();
                     System.out.println();
 
-                    selectProduct(conn, productName);
-                    System.out.println("데이터 조회 완료\n");
+                    deleteProduct(conn, productCode);
                     System.out.print("* 종료하려면 exit 입력 : ");
                     if (sc.next().equals("exit")) break;
                     sc.nextLine();
@@ -37,19 +36,13 @@ public class ProductSearch {
         }
     }
 
-    private static void selectProduct(Connection conn, String productName) throws SQLException {
-        String sql = "SELECT * FROM 상품 WHERE 상품명 LIKE CONCAT('%', ?, '%')";
+    private static void deleteProduct(Connection conn, int productCode) throws SQLException {
+        String sql = "DELETE FROM 상품 WHERE 상품코드 = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, productName);
-            try (ResultSet rs = pstmt.executeQuery()){
-                while (rs.next()) {
-                    System.out.println("상품 명 : " + rs.getString("상품명"));
-                    System.out.println("가격 : " + rs.getInt("가격"));
-                    System.out.println("재고 수량 : " + rs.getInt("재고수량"));
-                    System.out.println();
-                }
-            }
+            pstmt.setInt(1, productCode);
+            int rs = pstmt.executeUpdate();
+            System.out.println(rs > 0 ? "삭제 성공" : "존재하지 않음");
         }
     }
 }
